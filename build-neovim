@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+
+TAG="${1:-stable}"
+
+cd "${PM_HOME}/build/neovim"
+
+git checkout "${TAG}"
+
+# Clean up the build directory before regenerating the build files
+sudo make distclean
+
+CC=gcc sudo make CMAKE_BUILD_TYPE=RelWithDebInfo
+
+sudo make install
