@@ -1,0 +1,35 @@
+#!/usr/bin/env bash
+#
+# This script starts an Adminer instance linked to a selected Docker container.
+#
+PORT="${1:-8888}"
+ADMINER_DESIGN="lucas-sandery"
+
+DOCKER_NETWORKS="$(docker network ls | awk '{ print $2 };' | tail -n +2)"
+
+if [[ -z "${DOCKER_NETWORKS}" ]]; then
+    echo "No Docker networks found."
+    exit 1
+fi
+
+DOCKER_NETWORK="$(echo "${DOCKER_NETWORKS}" | gum filter --placeholder='Select network')"
+[[ -z "${DOCKER_NETWORK}" ]] && exit 1
+
+# Get the list of containers in the selected network
+DOCKER_CONTAINERS="$(docker inspect "${DOCKER_NETWORK}" -f '{{range.Containers}}{{println .Name}}{{end}}' | awk NF)"
+
+if [[ -z "${DOCKER_CONTAINERS}" ]]; then
+    echo "No containers found in the selected network."
+    exit 1
+fi
+
+DOCKER_CONTAINER="$(echo "${DOCKER_CONTAINERS}" | gum filter --placeholder='Select database container')"
+[[ -z "${DOCKER_CONTAINER}" ]] && exit 1
+
+command docker run --env ADMINER_DESIGN="${ADMINER_DESIGN}" \
+    --env ADMINER_DEFAULT_SERVER="${DOCKER_CONTAINER}" \
+    --network="${DOCKER_NETWORK}" \
+    --name adminer \
+    -p "${PORT}:8080" \
+    --rm \
+    adminer

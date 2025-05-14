@@ -76,10 +76,12 @@ fi
 #
 # Pull request
 #
-if confirm "Open a pull-request?"; then
-    echo -e "Open a pull-request: ${COLOR}Yes${WHITE}"
+if [[ $(git main-branch) != $(git current) ]]; then
+    if confirm "Open a pull-request?"; then
+        echo -e "Open a pull-request: ${COLOR}Yes${WHITE}"
 
-    gh pr create --assignee="@me" --fill --web
-else
-    echo -e "Open a pull-request: ${COLOR}No${WHITE}"
+        gh pr create --assignee="@me" --fill --web
+    else
+        echo -e "Open a pull-request: ${COLOR}No${WHITE}"
+    fi
 fi

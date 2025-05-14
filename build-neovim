@@ -4,6 +4,10 @@ TAG="${1:-stable}"
 
 cd "${PM_HOME}/build/neovim"
 
+# Pull updated tags from the remote
+git fetch --tags --force
+
+# Then  switch to the given tag
 git checkout "${TAG}"
 
 # Clean up the build directory before regenerating the build files

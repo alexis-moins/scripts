@@ -4,15 +4,13 @@
 #
 usage="usage: script-edit [SCRIPT]"
 
-dotfiles="${DOTFILES_DIR:-${HOME}/dotfiles}"
-
-if [[ ! -d "${dotfiles}/scripts" ]]; then
-    echo "script-edit: ${dotfiles}/scripts: no such directory"
+if [[ ! -d "${HOME}/scripts" ]]; then
+    echo "script-edit: ${HOME}/scripts: no such directory"
     echo "${usage}"
     exit 1
 fi
 
-pushd "${dotfiles}/scripts" &> /dev/null
+pushd "${HOME}/scripts" &> /dev/null
 
 if [[ -z "${1}" ]]; then
     file="$(fd --type f . | gum filter --placeholder="Filter scripts")"
