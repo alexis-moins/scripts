@@ -2,7 +2,7 @@
 #
 # Interactively commit changes to the repository.
 #
-VARIANT="${CI_VARIANT:-2}"
+VARIANT="${CI_VARIANT:-3}"
 
 WHITE="\e[0m"
 COLOR="\e[3${VARIANT};1m"
@@ -10,7 +10,7 @@ COLOR="\e[3${VARIANT};1m"
 GUM_CHOOSE_CURSOR_FOREGROUND="${VARIANT}"
 GUM_CHOOSE_SELECTED_FOREGROUND="${VARIANT}"
 
-TYPE=$(gum choose "fix:      A bug fix" "feat:     A new feature" "docs:     Documentation only change" "style:    Changes that do not affect the meaning of the code" "refactor: A code change that neither fixes a bug nor adds a feature" "test:     Adding missing or correcting existing tests" "chore:    Other changes that don't modify src or test files" "build:    Changes that affect the build system or external dependencies" --header="Select the type of change:" --no-show-help)
+TYPE=$(gum choose "fix:      A bug fix" "feat:     A new feature" "docs:     Documentation only change" "style:    Changes that do not affect the meaning of the code" "refactor: A code change that neither fixes a bug nor adds a feature" "test:     Adding missing or correcting existing tests" "chore:    Other changes that don't modify src or test files" "build:    Changes that affect the build system or external dependencies" "wording:  Changes in the wording only" --header="Select the type of change:" --no-show-help)
 
 if [[ -z "${TYPE}" ]]; then
     exit 1
@@ -23,12 +23,12 @@ echo -e "Select the type of change: ${COLOR}${TYPE}${WHITE}"
 #
 # Scope
 #
-SCOPE=$(gum input --prompt="What is the scope of this change? " --placeholder="scope (optional)" --no-show-help)
+scope=$(gum input --prompt="What is the scope of this change? " --placeholder="scope (optional)" --no-show-help)
 
-echo -e "What is the scope of this change: ${COLOR}${SCOPE:--}${WHITE}"
+echo -e "What is the scope of this change: ${COLOR}${scope:--}${WHITE}"
 
 # Since the scope is optional, wrap it in parentheses if it has a value.
-test -n "$SCOPE" && SCOPE="($SCOPE)"
+test -n "$scope" && scope="($scope)"
 
 #
 # Summary
@@ -47,41 +47,61 @@ confirm() {
 # Description
 #
 if confirm "Provide additional information?"; then
-    DESCRIPTION=$(gum write --header="Provide additional information about the code changes: " --placeholder "details (optional)")
+    commit_description="/tmp/ci-commit-description"
+
+    echo -e "" > "${commit_description}"
+
+    ${EDITOR:-vim} "${commit_description}"
+    [[ -f "${commit_description}" ]] && description=$(cat "${commit_description}")
 fi
 
-echo -e "Provide additional information about the code changes: ${COLOR}${DESCRIPTION:--}${WHITE}"
+if [[ -n "${description}" ]]; then
+    echo -e "Provide additional information about the code changes: \n${COLOR}${description}${WHITE}"
+else
+    echo -e "Provide additional information about the code changes: ${COLOR}-${WHITE}"
+fi
 
 #
 # Breaking Change
 #
 if confirm "Is this a breaking change?"; then
     echo -e "Is this a breaking change: ${COLOR}Yes${WHITE}"
-    BREAKING="!"
+    breaking="!"
 else
     echo -e "Is this a breaking change: ${COLOR}No${WHITE}"
 fi
 
+message="${TYPE}${breaking}${scope}: ${SUMMARY}"
+
+#
+# Recap
+#
+echo -e "\n ${COLOR}******${WHITE}\n"
+
+echo -e "${message}"
+
+if [[ -n "${description}" ]]; then
+    echo -e "\n${description}"
+fi
+
+echo -e "\n ${COLOR}******${WHITE}\n"
+
 #
 # Commit
 #
-MESSAGE="${TYPE}${BREAKING}${SCOPE}: ${SUMMARY}"
-
-if [[ -z "${DESCRIPTION}" ]]; then
-    git commit -m "${MESSAGE}"
+if [[ -z "${description}" ]]; then
+    git commit -m "${message}"
 else
-    git commit -m "${MESSAGE}" -m "$DESCRIPTION"
+    git commit -m "${message}" -m "${description}"
 fi
 
-#
-# Pull request
-#
-if [[ $(git main-branch) != $(git current) ]]; then
-    if confirm "Open a pull-request?"; then
-        echo -e "Open a pull-request: ${COLOR}Yes${WHITE}"
 
-        gh pr create --assignee="@me" --fill --web
-    else
-        echo -e "Open a pull-request: ${COLOR}No${WHITE}"
-    fi
+#
+# Push
+#
+if confirm "Push to the remote branch?"; then
+    echo -e "Push to the remote branch: ${COLOR}Yes${WHITE}"
+    git push
+else
+    echo -e "Push to the remote branch: ${COLOR}No${WHITE}"
 fi
