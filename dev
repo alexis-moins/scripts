@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+#
+# 
+#
+if [[ -f "package-lock.json" ]]; then
+    command npm run dev
+elif [[ -f "yarn.lock" ]]; then
+    command yarn dev
+elif [[ -f "pnpm-lock.yaml" ]]; then
+    command pnpm dev
+elif [[ -f "bun.lockb" ]]; then
+    command bun dev
+else
+    echo "dev: no lockfile found, skipping"
+fi

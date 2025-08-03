@@ -2,7 +2,7 @@
 
 TAG="${1:-stable}"
 
-cd "${PM_HOME}/build/neovim"
+cd "${DOMO_HOME}/build/neovim"
 
 # Pull updated tags from the remote
 git fetch --tags --force

@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+#
+# Disable and re-enable Spotlight indexing on all volumes
+#
+sudo mdutil -a -i off
+sudo mdutil -a -i on
